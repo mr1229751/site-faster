@@ -7,9 +7,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setFlagsFromString } from 'node:v8';
 
-// Turn off incremental marking before solve.js loads, so its allocations run
-// under the same GC mode as the house driver's.
-setFlagsFromString('--no-incremental-marking');
+// Run without the optimising compiler before solve.js loads: a single cold
+// pass never repays TurboFan/Maglev CPU, and the interpreter/baseline tiers
+// produce byte-identical output. Unknown flags are ignored by
+// setFlagsFromString, so on a V8 without it this simply loses the gain.
+setFlagsFromString('--no-opt');
 
 const { run } = (await import(new URL('./solve.js', import.meta.url).href)) as {
   run: (input: unknown) => unknown;
